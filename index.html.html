@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertidor Universal a PDF</title>
+    <style>
+        /* Estilos mejorados - manteniendo la estructura anterior */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8eaf6;
+            border-color: #5c6bc0;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .upload-text span {
+            color: #667eea;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .file-info {
+            background: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .options {
+            margin: 20px 0;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .supported-formats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .format-tag {
+            background: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .format-tag.new {
+            background: #c8e6c9;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .preview-area {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .preview-area.show {
+            display: block;
+        }
+
+        .preview-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .preview-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Convertidor Universal a PDF</h1>
+        <p class="subtitle">Convierte archivos de Office y LibreOffice a PDF directamente en tu navegador</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                Arrastra y suelta tu archivo aquí o <span>selecciona un archivo</span>
+            </div>
+            <input type="file" id="fileInput" style="display: none;" accept=".txt,.doc,.docx,.odt,.rtf,.jpg,.jpeg,.png,.gif,.html,.htm">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+            <div class="file-type" id="fileType"></div>
+        </div>
+
+        <div class="preview-area" id="previewArea">
+            <div class="preview-title">Vista previa del contenido:</div>
+            <div class="preview-content" id="previewContent"></div>
+        </div>
+
+        <div class="options">
+            <div class="option-group">
+                <label for="conversionMethod">Método de conversión:</label>
+                <select id="conversionMethod">
+                    <option value="auto">Automático (según tipo de archivo)</option>
+                    <option value="images">Imagen a PDF</option>
+                    <option value="text">Texto a PDF</option>
+                    <option value="html">HTML a PDF</option>
+                    <option value="docx">Word (DOCX) a PDF</option>
+                    <option value="odt">LibreOffice (ODT) a PDF</option>
+                    <option value="demo">Modo Demo (simulación)</option>
+                </select>
+            </div>
+
+            <div class="option-group">
+                <label for="pageSize">Tamaño de página:</label>
+                <select id="pageSize">
+                    <option value="A4">A4</option>
+                    <option value="Letter">Letter</option>
+                    <option value="Legal">Legal</option>
+                </select>
+            </div>
+
+            <div class="option-group">
+                <label for="orientation">Orientación:</label>
+                <select id="orientation">
+                    <option value="portrait">Vertical</option>
+                    <option value="landscape">Horizontal</option>
+                </select>
+            </div>
+
+            <div class="option-group">
+                <label for="filename">Nombre del archivo (opcional):</label>
+                <input type="text" id="filename" placeholder="mi-archivo-convertido">
+            </div>
+        </div>
+
+        <div class="supported-formats">
+            <span class="format-tag">📷 JPG/PNG/GIF</span>
+            <span class="format-tag">📄 TXT</span>
+            <span class="format-tag">🔗 HTML</span>
+            <span class="format-tag new">📝 DOC/DOCX (Word)</span>
+            <span class="format-tag new">📘 ODT (LibreOffice)</span>
+            <span class="format-tag">📊 RTF</span>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px;">Convirtiendo archivo...</p>
+        </div>
+
+        <button class="convert-btn" id="convertBtn" disabled>Convertir a PDF</button>
+
+        <div class="result" id="result"></div>
+
+        <div class="info-box">
+            <h3>✨ Nuevas funcionalidades</h3>
+            <p>Ahora soportamos conversión de:</p>
+            <ul>
+                <li><strong>Microsoft Word</strong> (DOC, DOCX) - Usando Mammoth.js + jsPDF</li>
+                <li><strong>LibreOffice</strong> (ODT) - Extracción de texto + formato básico</li>
+                <li><strong>Texto enriquecido</strong> (RTF) - Conversión básica</li>
+                <li><strong>Imágenes</strong> - Conversión directa manteniendo calidad</li>
+            </ul>
+            <p style="margin-top: 10px; font-weight: bold;">📝 Nota sobre LibreOffice ODT:</p>
+            <p>La conversión de ODT extrae el texto y el formato básico. Para una conversión perfecta con estilos complejos, se recomienda usar un backend con LibreOffice, pero esta versión ofrece una buena aproximación directamente en el navegador.</p>
+        </div>
+    </div>
+
+    <!-- Librerías necesarias para conversiones avanzadas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <script>
+        // Elementos del DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
+        const convertBtn = document.getElementById('convertBtn');
+        const result = document.getElementById('result');
+        const loading = document.getElementById('loading');
+        const previewArea = document.getElementById('previewArea');
+        const previewContent = document.getElementById('previewContent');
+        const conversionMethod = document.getElementById('conversionMethod');
+        const pageSize = document.getElementById('pageSize');
+        const orientation = document.getElementById('orientation');
+        const filename = document.getElementById('filename');
+
+        let selectedFile = null;
+
+        // Eventos de drag and drop
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // Manejar selección de archivo
+        async function handleFileSelect(file) {
+            selectedFile = file;
+            fileName.textContent = `📄 Nombre: ${file.name}`;
+            fileSize.textContent = `📦 Tamaño: ${(file.size / 1024).toFixed(2)} KB`;
+            
+            let tipo = 'Tipo: ';
+            if (file.type) {
+                tipo += file.type;
+            } else {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const tipos = {
+                    'doc': 'Microsoft Word (DOC)',
+                    'docx': 'Microsoft Word (DOCX)',
+                    'odt': 'LibreOffice Writer (ODT)',
+                    'rtf': 'Rich Text Format (RTF)',
+                    'txt': 'Texto plano',
+                    'jpg': 'Imagen JPEG',
+                    'jpeg': 'Imagen JPEG',
+                    'png': 'Imagen PNG',
+                    'gif': 'Imagen GIF',
+                    'html': 'HTML',
+                    'htm': 'HTML'
+                };
+                tipo += tipos[ext] || 'desconocido';
+            }
+            fileType.textContent = tipo;
+            
+            fileInfo.classList.add('show');
+            convertBtn.disabled = false;
+            showResult('', '');
+
+            // Vista previa para archivos de texto
+            await showPreview(file);
+        }
+
+        // Mostrar vista previa según tipo de archivo
+        async function showPreview(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const textExts = ['txt', 'html', 'htm', 'rtf', 'docx', 'odt'];
+            
+            if (textExts.includes(ext) || file.type.includes('text')) {
+                try {
+                    if (ext === 'docx') {
+                        // Para DOCX, usar mammoth para vista previa
+                        const arrayBuffer = await file.arrayBuffer();
+                        const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                        previewContent.textContent = result.value.substring(0, 500) + '...';
+                        previewArea.classList.add('show');
+                    } else if (ext === 'odt') {
+                        // Para ODT, leer como texto (simplificado)
+                        const text = await file.text();
+                        previewContent.textContent = text.substring(0, 500) + '...';
+                        previewArea.classList.add('show');
+                    } else {
+                        const text = await file.text();
+                        previewContent.textContent = text.substring(0, 500) + (text.length > 500 ? '...' : '');
+                        previewArea.classList.add('show');
+                    }
+                } catch (error) {
+                    console.log('No se pudo generar vista previa:', error);
+                    previewArea.classList.remove('show');
+                }
+            } else if (file.type.startsWith('image/')) {
+                // Vista previa de imagen
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewContent.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 200px;">`;
+                    previewArea.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewArea.classList.remove('show');
+            }
+        }
+
+        // Mostrar resultado
+        function showResult(message, type) {
+            result.textContent = message;
+            result.className = 'result ' + type;
+        }
+
+        // Mostrar/ocultar loading
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loading.classList.add('show');
+                convertBtn.disabled = true;
+            } else {
+                loading.classList.remove('show');
+                convertBtn.disabled = false;
+            }
+        }
+
+        // Convertir imagen a PDF (mejorado)
+        async function convertImageToPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        
+                        img.onload = () => {
+                            const { jsPDF } = window.jspdf;
+                            
+                            // Calcular dimensiones manteniendo proporción
+                            const imgWidth = img.width;
+                            const imgHeight = img.height;
+                            
+                            let pdf;
+                            if (orientation.value === 'portrait') {
+                                pdf = new jsPDF({
+                                    orientation: 'portrait',
+                                    unit: 'px',
+                                    format: pageSize.value
+                                });
+                            } else {
+                                pdf = new jsPDF({
+                                    orientation: 'landscape',
+                                    unit: 'px',
+                                    format: pageSize.value
+                                });
+                            }
+                            
+                            const pageWidth = pdf.internal.pageSize.getWidth();
+                            const pageHeight = pdf.internal.pageSize.getHeight();
+                            
+                            // Calcular proporciones para ajustar la imagen
+                            const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+                            const width = imgWidth * ratio;
+                            const height = imgHeight * ratio;
+                            
+                            // Centrar imagen
+                            const x = (pageWidth - width) / 2;
+                            const y = (pageHeight - height) / 2;
+                            
+                            // Determinar formato de imagen
+                            const imgFormat = file.type.includes('png') ? 'PNG' : 'JPEG';
+                            
+                            pdf.addImage(img, imgFormat, x, y, width, height);
+                            
+                            const outputFilename = filename.value || file.name.split('.')[0];
+                            pdf.save(`${outputFilename}.pdf`);
+                            resolve();
+                        };
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Convertir texto a PDF
+        async function convertTextToPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: orientation.value,
+                            unit: 'pt',
+                            format: pageSize.value
+                        });
+                        
+                        const text = e.target.result;
+                        const lines = pdf.splitTextToSize(text, 500);
+                        
+                        let y = 40;
+                        pdf.setFontSize(12);
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                            if (y > 780) {
+                                pdf.addPage();
+                                y = 40;
+                            }
+                            pdf.text(lines[i], 40, y);
+                            y += 15;
+                        }
+                        
+                        const outputFilename = filename.value || file.name.split('.')[0];
+                        pdf.save(`${outputFilename}.pdf`);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // Convertir HTML a PDF (mejorado)
+        async function convertHTMLToPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        // Crear un elemento temporal para el HTML
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = e.target.result;
+                        tempDiv.style.position = 'absolute';
+                        tempDiv.style.left = '-9999px';
+                        tempDiv.style.width = '800px';
+                        document.body.appendChild(tempDiv);
+                        
+                        // Usar html2canvas para capturar el HTML
+                        const canvas = await html2canvas(tempDiv, {
+                            scale: 2,
+                            logging: false,
+                            allowTaint: false,
+                            useCORS: true
+                        });
+                        
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: orientation.value,
+                            unit: 'px',
+                            format: pageSize.value
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        
+                        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+                        
+                        document.body.removeChild(tempDiv);
+                        
+                        const outputFilename = filename.value || file.name.split('.')[0];
+                        pdf.save(`${outputFilename}.pdf`);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // Convertir DOCX a PDF usando mammoth.js
+        async function convertDocxToPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        // Convertir DOCX a HTML con mammoth
+                        const arrayBuffer = e.target.result;
+                        const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                        const html = result.value;
+                        
+                        // Crear elemento temporal para renderizar
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        tempDiv.style.position = 'absolute';
+                        tempDiv.style.left = '-9999px';
+                        tempDiv.style.width = '800px';
+                        tempDiv.style.padding = '20px';
+                        tempDiv.style.fontFamily = 'Arial, sans-serif';
+                        document.body.appendChild(tempDiv);
+                        
+                        // Capturar como imagen y convertir a PDF
+                        const canvas = await html2canvas(tempDiv, {
+                            scale: 2,
+                            logging: false,
+                            allowTaint: false
+                        });
+                        
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: orientation.value,
+                            unit: 'px',
+                            format: pageSize.value
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        
+                        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+                        
+                        document.body.removeChild(tempDiv);
+                        
+                        const outputFilename = filename.value || file.name.split('.')[0];
+                        pdf.save(`${outputFilename}.pdf`);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Convertir ODT (LibreOffice) a PDF
+        // Nota: Extrae texto y preserva formato básico, pero es una aproximación
+        async function convertOdtToPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        // ODT es un archivo ZIP que contiene XML
+                        // Para simplificar, extraemos el texto del content.xml
+                        const arrayBuffer = e.target.result;
+                        
+                        // Usar JSZip para descomprimir (cargado desde CDN)
+                        const JSZip = window.JSZip;
+                        if (!JSZip) {
+                            // Si no está disponible, usar método alternativo
+                            throw new Error('JSZip no está disponible');
+                        }
+                        
+                        const zip = await JSZip.loadAsync(arrayBuffer);
+                        
+                        // Buscar content.xml que contiene el texto
+                        const contentFile = zip.file('content.xml');
+                        if (!contentFile) {
+                            throw new Error('No se encontró content.xml en el ODT');
+                        }
+                        
+                        const contentXml = await contentFile.async('string');
+                        
+                        // Extraer texto de las etiquetas <text:p> y <text:h>
+                        const textMatches = contentXml.match(/<text:p[^>]*>(.*?)<\/text:p>|<text:h[^>]*>(.*?)<\/text:h>/gs);
+                        
+                        let plainText = '';
+                        if (textMatches) {
+                            textMatches.forEach(match => {
+                                // Limpiar etiquetas HTML internas
+                                let cleanText = match.replace(/<[^>]*>/g, ' ');
+                                cleanText = cleanText.replace(/\s+/g, ' ').trim();
+                                if (cleanText) {
+                                    plainText += cleanText + '\n\n';
+                                }
+                            });
+                        }
+                        
+                        if (!plainText) {
+                            plainText = 'No se pudo extraer texto del documento ODT';
+                        }
+                        
+                        // Crear PDF con el texto extraído
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: orientation.value,
+                            unit: 'pt',
+                            format: pageSize.value
+                        });
+                        
+                        pdf.setFontSize(12);
+                        pdf.text('Documento LibreOffice ODT convertido', 40, 40);
+                        pdf.setFontSize(10);
+                        
+                        const lines = pdf.splitTextToSize(plainText, 500);
+                        let y = 70;
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                            if (y > 780) {
+                                pdf.addPage();
+                                y = 40;
+                            }
+                            pdf.text(lines[i], 40, y);
+                            y += 15;
+                        }
+                        
+                        const outputFilename = filename.value || file.name.split('.')[0];
+                        pdf.save(`${outputFilename}.pdf`);
+                        resolve();
+                        
+                    } catch (error) {
+                        console.error('Error en ODT:', error);
+                        reject(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Determinar método automático según archivo
+        function getMethodFromFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (file.type.startsWith('image/')) {
+                return 'images';
+            } else if (ext === 'docx' || ext === 'doc') {
+                return 'docx';
+            } else if (ext === 'odt') {
+                return 'odt';
+            } else if (ext === 'html' || ext === 'htm') {
+                return 'html';
+            } else if (ext === 'txt' || ext === 'rtf') {
+                return 'text';
+            } else {
+                return 'demo';
+            }
+        }
+
+        // Evento de conversión
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            setLoading(true);
+            showResult('', '');
+            previewArea.classList.remove('show');
+
+            try {
+                const method = conversionMethod.value === 'auto' 
+                    ? getMethodFromFile(selectedFile)
+                    : conversionMethod.value;
+                
+                const ext = selectedFile.name.split('.').pop().toLowerCase();
+
+                // Ejecutar según método seleccionado
+                if (method === 'images' || (method === 'auto' && selectedFile.type.startsWith('image/'))) {
+                    await convertImageToPDF(selectedFile);
+                    showResult('✅ Imagen convertida a PDF exitosamente', 'success');
+                }
+                else if (method === 'text' || (method === 'auto' && (ext === 'txt' || ext === 'rtf'))) {
+                    await convertTextToPDF(selectedFile);
+                    showResult('✅ Texto convertido a PDF exitosamente', 'success');
+                }
+                else if (method === 'html' || (method === 'auto' && (ext === 'html' || ext === 'htm'))) {
+                    await convertHTMLToPDF(selectedFile);
+                    showResult('✅ HTML convertido a PDF exitosamente', 'success');
+                }
+                else if (method === 'docx' || (method === 'auto' && (ext === 'docx' || ext === 'doc'))) {
+                    await convertDocxToPDF(selectedFile);
+                    showResult('✅ Documento Word convertido a PDF exitosamente', 'success');
+                }
+                else if (method === 'odt' || (method === 'auto' && ext === 'odt')) {
+                    await convertOdtToPDF(selectedFile);
+                    showResult('✅ Documento LibreOffice convertido a PDF exitosamente', 'success');
+                }
+                else {
+                    // Modo demo para otros formatos
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: orientation.value,
+                        unit: 'pt',
+                        format: pageSize.value
+                    });
+                    
+                    pdf.setFontSize(20);
+                    pdf.text('Vista previa de conversión', 40, 40);
+                    pdf.setFontSize(12);
+                    pdf.text(`Archivo: ${selectedFile.name}`, 40, 80);
+                    pdf.text(`Tamaño: ${(selectedFile.size / 1024).toFixed(2)} KB`, 40, 100);
+                    pdf.text(`Tipo: ${selectedFile.type || 'desconocido'}`, 40, 120);
+                    pdf.text('', 40, 140);
+                    pdf.text('Modo DEMO - Conversión simulada', 40, 160);
+                    pdf.text('Para conversión real de este formato:', 40, 180);
+                    pdf.text('• Usa el método automático', 40, 200);
+                    pdf.text('• O selecciona el método específico', 40, 220);
+                    
+                    const outputFilename = filename.value || selectedFile.name.split('.')[0];
+                    pdf.save(`${outputFilename}_demo.pdf`);
+                    
+                    showResult('✅ Archivo procesado en modo demo', 'warning');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showResult('❌ Error al convertir el archivo: ' + error.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Cargar JSZip dinámicamente si es necesario
+        function loadJSZip() {
+            return new Promise((resolve, reject) => {
+                if (window.JSZip) {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // Cargar JSZip al inicio para ODT
+        loadJSZip().catch(() => console.log('JSZip no cargado, funcionalidad ODT limitada'));
+
+        // Cambiar método según archivo seleccionado
+        conversionMethod.addEventListener('change', () => {
+            if (selectedFile) {
+                const method = conversionMethod.value;
+                const ext = selectedFile.name.split('.').pop().toLowerCase();
+                
+                if (method !== 'auto') {
+                    let warning = '';
+                    if (method === 'images' && !selectedFile.type.startsWith('image/')) {
+                        warning = ⚠️ El archivo seleccionado no es una imagen.';
+                    } else if (method === 'text' && !['txt', 'rtf'].includes(ext)) {
+                        warning = '⚠️ El archivo seleccionado no es un archivo de texto.';
+                    } else if (method === 'html' && !['html', 'htm'].includes(ext)) {
+                        warning = '⚠️ El archivo seleccionado no es un archivo HTML.';
+                    } else if (method === 'docx' && !['docx', 'doc'].includes(ext)) {
+                        warning = '⚠️ El archivo seleccionado no es un documento Word.';
+                    } else if (method === 'odt' && ext !== 'odt') {
+                        warning = '⚠️ El archivo seleccionado no es un documento LibreOffice.';
+                    }
+                    
+                    if (warning) {
+                        showResult(warning + ' Usa el método automático para mejor resultado.', 'warning');
+                    } else {
+                        showResult('', '');
+                    }
+                } else {
+                    showResult('', '');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
